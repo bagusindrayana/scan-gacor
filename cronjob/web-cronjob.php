@@ -2,6 +2,7 @@
 // Daftar kata kunci yang biasanya terkait dengan situs judi
 $keywords = ['judi', 'poker', 'kasino', 'slot', 'taruhan', 'togel', 'mahjong'];
 $directory_paths = ["./assets"];
+$ignore_paths = ["./my-cron-job"];
 $delete = true;
 $log = false;
 
@@ -34,14 +35,16 @@ function scan_folder($folder_path, $keywords)
 
 
 // Fungsi untuk memindai direktori
-function scan_directory($directory_path, $keywords)
+function scan_directory($directory_path, $keywords,$ignore_paths)
 {
     $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory_path));
+    //ignore path
+
     $results = [];
     foreach ($files as $file) {
         if ($file->isFile() && in_array($file->getExtension(), ['php', 'html'])) {
             $r = scan_file($file->getRealPath(), $keywords);
-            if (count($r) > 0) {
+            if (count($r) > 0 && (stripos($file->getRealPath(), $ignore_paths) == false)) {
                 $results[] = [
                     "type" => "file",
                     "found" => implode(",", $r),
@@ -50,7 +53,7 @@ function scan_directory($directory_path, $keywords)
             }
         } else if ($file->isDir()) {
             $r = scan_folder($file->getRealPath(), $keywords);
-            if (count($r) > 0) {
+            if (count($r) > 0 && (stripos($file->getRealPath(), $ignore_paths) == false)) {
                 $results[] = [
                     "type" => "folder",
                     "found" => implode(",", $r),
@@ -70,7 +73,7 @@ if (count($directory_paths)) {
     $rdir = [];
     foreach ($directory_paths as $directory_path) {
         if(is_dir($directory_path)){
-            $resultScan = scan_directory($directory_path, $keywords);
+            $resultScan = scan_directory($directory_path, $keywords,$ignore_paths);
             $rdir = array_merge($rdir, $resultScan);
             
         }

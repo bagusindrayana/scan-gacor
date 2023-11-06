@@ -78,6 +78,29 @@ function scan_directory($directory_path, $keywords)
     return $results;
 }
 
+function deleteDirectory($dir) {
+    if (!file_exists($dir)) {
+        return true;
+    }
+
+    if (!is_dir($dir)) {
+        return unlink($dir);
+    }
+
+    foreach (scandir($dir) as $item) {
+        if ($item == '.' || $item == '..') {
+            continue;
+        }
+
+        if (!deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) {
+            return false;
+        }
+
+    }
+
+    return rmdir($dir);
+}
+
 // Mendapatkan argumen direktori dari command line
 $directory_path = $argv[1] ?? '';
 
@@ -95,15 +118,15 @@ foreach ($argv as $arg) {
 
 
 if ($directory_path !== '' && is_dir($directory_path)) {
-    echo "Memulai scan...";
+    echo "Memulai scan...\n";
     $rdir = scan_directory($directory_path, $keywords);
     if ($delete) {
-        echo "Menghapus file dan folder yang terdeteksi...";
+        echo "Menghapus file dan folder yang terdeteksi...\n";
         for ($i = 0; $i < count($rdir); $i++) {
             if ($rdir[$i]['type'] == 'file') {
                 unlink($rdir[$i]['path']);
             } else {
-                rmdir($rdir[$i]['path']);
+                deleteDirectory($rdir[$i]['path']);
             }
         }
     }
@@ -115,7 +138,7 @@ if ($directory_path !== '' && is_dir($directory_path)) {
         }
         fclose($log);
     }
-    echo "Selesai scan.";
+    echo "Selesai scan.\n";
 } else {
     echo "Argumen direktori tidak valid atau tidak diberikan.\n";
 }
